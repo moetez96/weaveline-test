@@ -4,9 +4,10 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
+import { ListModule } from './list/list.module';
 
 @Module({
-  imports: [AuthModule,
+  imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }), 
@@ -16,7 +17,9 @@ import { AuthModule } from './auth/auth.module';
       useFactory: async (config: ConfigService) => ({
         uri: config.get<string>('DB_URL'),
       })
-  })],
+  }),  
+  AuthModule,
+  ListModule],
   controllers: [AppController],
   providers: [AppService],
 })

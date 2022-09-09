@@ -1,25 +1,23 @@
 import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
-import { User, UserDocument } from 'src/schemas/user.schema';
+import { UserRepository } from 'src/shared/repository/user.repository';
 import { LoginData } from './dto/login.dto';
 import { RegisterData } from './dto/register.dto';
 
 @Injectable()
 export class AuthService {
-    constructor(@InjectModel(User.name) private userModel: Model<UserDocument>, private jwtService: JwtService){}
+    constructor(private userRepository: UserRepository, private jwtService: JwtService){}
 
     async login(data: LoginData){
         try{
-            const user = await this.userModel.findOne({email: data.email})
+            const user = await this.userRepository.findOne({email: data.email})
             if(!user){
                throw new NotFoundException("user with this email does not exist")
             }
             if(user.password !== data.password){
                 throw new UnauthorizedException("password not valid")
             }
-            return this.signUser(user._id, user.fullName)
+            return this.signUser(user)
         }catch(e){
             return {message : e.message};
         }
@@ -27,23 +25,22 @@ export class AuthService {
 
     async register(data: RegisterData){
         try {
-            const user =  await this.userModel.findOne({email: data.email})
+            const user =  await this.userRepository.findOne({email: data.email})
             if(user){
                 throw new UnauthorizedException("email already exist")
             }else{
-                const newUser = new this.userModel(data);
-                const savedUser = newUser.save();
-                return savedUser;
+                const newUser = await this.userRepository.create(data);
+                return newUser;
             }
         }catch(e){
             return {message : e.message};
         }
     }
 
-    signUser(userId: Types.ObjectId, userFullName: string){
+    signUser(user: any){
         return {accessToken: this.jwtService.sign({
-            id: userId,
-            fullName: userFullName
+            id: user._id,
+            fullName: user.fullName
         })}
 
     }
