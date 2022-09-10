@@ -3,13 +3,13 @@ import { NoteService } from './note.service';
 import { NoteController } from './note.controller';
 import { ListService } from 'src/list/list.service';
 import { ListRepository } from 'src/list/repositories/list.repository';
-import { UserRepository } from 'src/shared/repository/user.repository';
+import { UserRepository } from 'src/shared/repositories/user.repository';
 import { ContributorRepository } from 'src/list/repositories/contributor.repository';
 import { MongooseModule } from '@nestjs/mongoose';
-import { List, ListSchema } from 'src/schemas/list.schema';
-import { User, UserSchema } from 'src/schemas/user.schema';
-import { Contributor, ContributorSchema } from 'src/schemas/contributor.schema';
-import { Note, NoteSchema } from 'src/schemas/note.schema';
+import { List, ListSchema } from 'src/model/list.schema';
+import { User, UserSchema } from 'src/model/user.schema';
+import { Contributor, ContributorSchema } from 'src/model/contributor.schema';
+import { Note, NoteSchema } from 'src/model/note.schema';
 import { NoteRepository } from './repositories/note.repository';
 
 @Module({

@@ -1,5 +1,5 @@
 import { ForbiddenException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
-import { UserRepository } from 'src/shared/repository/user.repository';
+import { UserRepository } from 'src/shared/repositories/user.repository';
 import { ContributorData } from './dto/contributor.dto';
 import { CreateListData } from './dto/createlist.dto';
 import { ContributorRepository } from './repositories/contributor.repository';
@@ -36,12 +36,8 @@ export class ListService {
                 return {message: 'list not found'}
             }
 
-            if(list.owner.toString() === userId){
-                return list;
-            }
-
             const privilege = await this.contributorPrivilege(list, userId)
-            if(privilege == 'readonly' || privilege == 'readwrite'){
+            if(privilege == 'readonly' || privilege == 'readwrite' || list.owner.toString() === userId){
                 return list
             }
 
@@ -74,7 +70,7 @@ export class ListService {
             if(!list){
                 throw new NotFoundException("list does not exist");
             }
-            if(list.owner.toString() !== user._id.toString()){
+            if(list.owner.toString() !== userId){
                 throw new ForbiddenException("the user does not own this list")
             }
             const foundList = await this.listRepository.findOne({name: data.name, owner: user});
@@ -97,7 +93,7 @@ export class ListService {
             if(!list){
                 throw new NotFoundException("list does not exist");
             }
-            if(list.owner.toString() !== user._id.toString()){
+            if(list.owner.toString() !== userId){
                 throw new ForbiddenException("the user does not own this list")
             }
             return this.listRepository.findOneAndDelete(list)

@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { FilterQuery, Model } from "mongoose";
-import { List, ListDocument } from "src/schemas/list.schema";
+import { List, ListDocument } from "src/model/list.schema";
 import { CreateListData } from "../dto/createlist.dto";
 
 @Injectable()

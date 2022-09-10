@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { FilterQuery, Model } from "mongoose";
 import { RegisterData } from "src/auth/dto/register.dto";
-import { User, UserDocument } from "src/schemas/user.schema";
+import { User, UserDocument } from "src/model/user.schema";
 
 @Injectable()
 export class UserRepository {

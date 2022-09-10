@@ -1,8 +1,6 @@
 import { ForbiddenException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
-import { ListService } from 'src/list/list.service';
-import { ContributorRepository } from 'src/list/repositories/contributor.repository';
 import { ListRepository } from 'src/list/repositories/list.repository';
-import { UserRepository } from 'src/shared/repository/user.repository';
+import { UserRepository } from 'src/shared/repositories/user.repository';
 import { CreateNoteData } from './dto/createNote.dto';
 import { UpdateNoteData } from './dto/updateNote.dto';
 import { NoteRepository } from './repositories/note.repository';

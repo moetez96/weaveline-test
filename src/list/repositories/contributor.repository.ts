@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
-import { Contributor, ContributorDocument } from "src/schemas/contributor.schema";
+import { Contributor, ContributorDocument } from "src/model/contributor.schema";
 
 @Injectable()
 export class ContributorRepository {
