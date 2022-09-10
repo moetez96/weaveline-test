@@ -1,5 +1,4 @@
 import { ForbiddenException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
-import { Contributor } from 'src/schemas/contributor.schema';
 import { UserRepository } from 'src/shared/repository/user.repository';
 import { ContributorData } from './dto/contributor.dto';
 import { CreateListData } from './dto/createlist.dto';
@@ -24,6 +23,28 @@ export class ListService {
             }else{
                 return {message: 'no lists yet'}
             }
+        }catch(e){
+            return {message : e.message};
+        }
+    }
+
+    async getById(listId: string, userId : string){
+        try{
+            const list = await this.listRepository.findById(listId);
+            
+            if(!list){
+                return {message: 'list not found'}
+            }
+
+            if(list.owner.toString() === userId){
+                return list;
+            }
+
+            const privilege = await this.contributorPrivilege(list, userId)
+            if(privilege == 'readonly' || privilege == 'readwrite'){
+                return list
+            }
+
         }catch(e){
             return {message : e.message};
         }
@@ -165,6 +186,23 @@ export class ListService {
             return list.contributors.map((contributor) => contributor.user).find((contributor) => contributor.toString() === contributorId);
         }else{
             return false;
+        }
+    }
+
+    async contributorPrivilege(list : any, contributorId: string){
+        if(list.contributors.length > 0 ){
+            var contributorFound : any = null
+            await Promise.all(list.contributors.map((contributor) => {
+               if(contributor.user.toString() === contributorId){
+                contributorFound = contributor
+               }
+            }))
+            if(!contributorFound){
+                throw new UnauthorizedException("user is not invited on this list")
+            }
+            return contributorFound.privilege;
+        }else{
+            throw new UnauthorizedException("user is not invited on this list")
         }
     }
 }

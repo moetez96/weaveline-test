@@ -15,6 +15,12 @@ export class ListController {
        return this.listService.getAll(user.id);
     }
 
+    @Get('/:id')
+    @UseGuards(JwtAuthGuard)
+    getById(@AuthUser() user: any, @Param() params){
+       return this.listService.getById(params.id, user.id);
+    }
+
     @Post('create')
     @UseGuards(JwtAuthGuard)
     create(@AuthUser() user: any, @Body() data: CreateListData){
