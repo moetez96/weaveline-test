@@ -1,14 +1,18 @@
-import { ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { Contributor } from 'src/schemas/contributor.schema';
 import { UserRepository } from 'src/shared/repository/user.repository';
+import { ContributorData } from './dto/contributor.dto';
 import { CreateListData } from './dto/createlist.dto';
-import { ListRepository } from './list.repository';
+import { ContributorRepository } from './repositories/contributor.repository';
+import { ListRepository } from './repositories/list.repository';
 
 @Injectable()
 export class ListService {
 
     constructor(
         private listRepository : ListRepository, 
-        private userRepository: UserRepository
+        private userRepository: UserRepository,
+        private contributorRepository: ContributorRepository
         ){}
 
     async getAll(userId: string){
@@ -46,7 +50,9 @@ export class ListService {
         try{
             const user = await this.userRepository.findById(userId);
             const list = await this.listRepository.findById(listId);
-
+            if(!list){
+                throw new NotFoundException("list does not exist");
+            }
             if(list.owner.toString() !== user._id.toString()){
                 throw new ForbiddenException("the user does not own this list")
             }
@@ -63,15 +69,102 @@ export class ListService {
         }
     }
 
-    async invite(userId: string, listId: string, participantId: string){
+    async delete(userId: string, listId: string){
         try{
             const user = await this.userRepository.findById(userId);
             const list = await this.listRepository.findById(listId);
+            if(!list){
+                throw new NotFoundException("list does not exist");
+            }
             if(list.owner.toString() !== user._id.toString()){
                 throw new ForbiddenException("the user does not own this list")
             }
+            return this.listRepository.findOneAndDelete(list)
         }catch(e){
             return {message : e.message};
+        }
+    }
+
+    async inviteContributor(userId: string, data: ContributorData, listId: string, contributorId: string){
+        try{
+            var list = await this.listRepository.findById(listId);
+            if(!list){
+                throw new NotFoundException("list does not exist");
+            }
+            if(list.owner.toString() !== userId){
+                throw new ForbiddenException("the user does not own this list");
+            }
+            if(this.findContributorInList(list, contributorId)){
+                throw new ForbiddenException("contributor already exist");
+            }
+            const contributor = await this.userRepository.findById(contributorId);
+            const contributorData = {
+                user: contributor,
+                privilege: data.privilege
+            };
+            const newContributor = await this.contributorRepository.create(contributorData);
+            list.contributors.push(newContributor);
+            const updateContributors = {contributors : list.contributors};
+            return this.listRepository.findOneAndUpdate(list, updateContributors);
+        }catch(e){
+            return {message : e.message};
+        }
+    }
+
+    async removeContributor(userId: string, listId: string, contributorId: string){
+        try{
+            var list = await this.listRepository.findById(listId);
+            if(!list){
+                throw new NotFoundException("list does not exist");
+            }
+            if(list.owner.toString() !== userId){
+                throw new ForbiddenException("the user does not own this list");
+            }
+            if(!this.findContributorInList(list, contributorId)){
+                throw new ForbiddenException("contributor does not exist in this list");
+            }
+            var contributors = list.contributors.filter((contributor) => {
+                console.log(contributor.user.toString() !== contributorId)
+                return contributor.user.toString() !== contributorId
+            });
+            const updateContributors = {contributors : contributors};
+            return this.listRepository.findOneAndUpdate(list, updateContributors);
+        }catch(e){
+            return {message : e.message};
+        }
+    }
+
+    async changeContributorPrivilege(userId: string, data: ContributorData, listId: string, contributorId: string){
+        try{
+            var list = await this.listRepository.findById(listId);
+            if(!list){
+                throw new NotFoundException("list does not exist");
+            }
+            if(list.owner.toString() !== userId){
+                throw new ForbiddenException("the user does not own this list");
+            }
+             if(!this.findContributorInList(list, contributorId)){
+                throw new ForbiddenException("contributor does not exist in this list");
+            }
+            const contributors = list.contributors.map((contributor) => {
+                if(contributor.user.toString() === contributorId){
+                    contributor.privilege = data.privilege 
+                }
+                return contributor
+                
+            });
+            const updateContributors = {contributors : contributors};
+            return this.listRepository.findOneAndUpdate(list, updateContributors);
+        }catch(e){
+            return {message : e.message};
+        }
+    }
+
+    findContributorInList(list: any, contributorId: string){
+        if(list.contributors.length > 0 ){
+            return list.contributors.map((contributor) => contributor.user).find((contributor) => contributor.toString() === contributorId);
+        }else{
+            return false;
         }
     }
 }

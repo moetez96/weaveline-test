@@ -2,7 +2,7 @@ import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import mongoose from "mongoose";
 import { User } from "./user.schema";
 export type ContributorDocument = Contributor & Document;
-@Schema()
+@Schema({_id : false})
 export class Contributor {
 
     @Prop({
