@@ -15,7 +15,11 @@ export class ListService {
         private userRepository: UserRepository,
         private contributorRepository: ContributorRepository
         ){}
-
+    
+    async findOne(list: List){
+        return await this.listRepository.findOne(list);
+    }
+        
     async getAll(userId: string){
         const user = await this.userRepository.findById(userId);
         return await this.listRepository.find({owner: user});
@@ -77,20 +81,16 @@ export class ListService {
         }
     }
 
-    async contributorPrivilege(list : any, contributorId: string){
+   async contributorPrivilege(list : any, contributorId: string){
         if(list.contributors.length > 0 ){
             var contributorFound : any = null
             await Promise.all(list.contributors.map((contributor) => {
-               if(contributor.user.toString() === contributorId){
+            if(contributor.user.toString() === contributorId){
                 contributorFound = contributor
-               }
-            }))
-            if(!contributorFound){
-                throw new UnauthorizedException("user is not invited on this list")
-            }
+            }}));
             return contributorFound.privilege;
         }else{
-            throw new UnauthorizedException("user is not invited on this list")
+            return null
         }
-    }   
+    } 
 }

@@ -1,5 +1,6 @@
-import { ForbiddenException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { ListRepository } from 'src/list/repositories/list.repository';
+import { List } from 'src/model/list.schema';
 import { UserRepository } from 'src/shared/repositories/user.repository';
 import { CreateNoteData } from './dto/createNote.dto';
 import { UpdateNoteData } from './dto/updateNote.dto';
@@ -13,113 +14,31 @@ export class NoteService {
         private noteRepository: NoteRepository
         ){}
 
-        async getById(userId: string, noteId: string){
-            try{
-                const note = await this.noteRepository.findById(noteId);
-                if(!note){
-                    throw new NotFoundException("list does not exist");
-                }
-                const list = await this.listRepository.findOne(note.list);
-
-                if(!list){
-                    return {message: 'list not found'};
-                }
-
-                const privilege = await this.contributorPrivilege(list, userId)
-                if(
-                    privilege === 'readonly' || 
-                    privilege == 'readwrite' || 
-                    list.owner.toString() === userId
-                    ){
-                    return note;
-                }
-
-            }catch(e){
-                return {message : e.message};
-            }
+        async findById(noteId: string){
+            return await this.noteRepository.findById(noteId);
         }
 
-        async create(data: CreateNoteData, userId: string, listId: string ){
-            try{
-                const user = await this.userRepository.findById(userId);
-                const list = await this.listRepository.findById(listId);
-                
-                if(!list){
-                    return {message: 'list not found'};
-                }
-
-                const privilege = await this.contributorPrivilege(list, userId);
-                if(privilege === 'readwrite' || list.owner.toString() === userId){
-                    const foundNote = await this.noteRepository.findOne({name: data.name, list: list});
-                    if(foundNote){
-                        throw new UnauthorizedException("list already have a note with the same name");
-                    }
-                    const newNote = {
-                        name: data.name,
-                        description: data.description,
-                        list: list,
-                        creator: user
-                    };
-
-                    return this.noteRepository.create(newNote);
-                }
-               throw new UnauthorizedException("user have readonly privilege he cannot create notes in this list");
-            }catch(e){
-                return {message : e.message};
-            }
+        async findByNameAndList(data: any){
+            return await this.noteRepository.findOne(data)
         }
 
-        async update(data: UpdateNoteData, userId: string, noteId: string ){
-            try{
-                const note = await this.noteRepository.findById(noteId);
-
-                if(!note){
-                    throw new NotFoundException("note does not exist");
-                }
-
-                const list = await this.listRepository.findOne(note.list);
-                
-                if(!list){
-                    throw new NotFoundException("list does not exist");
-                }
-
-                const privilege = await this.contributorPrivilege(list, userId)
-                if(privilege === 'readwrite' || list.owner.toString() === userId){
-                    if(data.name){
-                        const foundNote = await this.noteRepository.findOne({name: data.name, list: list})
-                        if(foundNote){
-                            throw new UnauthorizedException("list already have a note with the same name");
-                        }
-                    }
-                    return this.noteRepository.findOneAndUpdate(note, data);
-                }
-               throw new UnauthorizedException("user have readonly privilege he cannot update notes in this list");
-            }catch(e){
-                return {message : e.message};
-            }
+        async create(data: CreateNoteData, list: List, userId: string ){
+            const user = await this.userRepository.findById(userId);
+            const newNote = {
+                name: data.name,
+                description: data.description,
+                list: list,
+                creator: user
+            };
+            return await this.noteRepository.create(newNote);
         }
 
-        async delete(userId: string, noteId: string){
-            try{
-                const note = await this.noteRepository.findById(noteId);
-                if(!note){
-                    throw new NotFoundException("note does not exist");
-                }
+        async update(userId: string, data: UpdateNoteData){
+            return await this.noteRepository.findByIdAndUpdate(userId, data);
+        }
 
-                const list = await this.listRepository.findOne(note.list);
-                
-                if(!list){
-                    throw new NotFoundException("list does not exist");
-                }
-
-                const privilege = await this.contributorPrivilege(list, userId)
-                if(privilege === 'readwrite' || list.owner.toString() === userId){
-                    return this.noteRepository.findOneAndDelete(note);
-                }
-               throw new UnauthorizedException("user have readonly privilege he cannot delete notes in this list");
-            }catch(e){
-                return {message : e.message};
-            }
+        async delete(noteId: string){
+            return await this.noteRepository.findByIdAndDelete(noteId);
         }
 
         async contributorPrivilege(list : any, contributorId: string){
@@ -129,13 +48,10 @@ export class NoteService {
                 if(contributor.user.toString() === contributorId){
                     contributorFound = contributor
                 }
-                }))
-                if(!contributorFound){
-                    throw new UnauthorizedException("user is not invited on this list", "Unauthorized")
-                }
+                }));
                 return contributorFound.privilege;
             }else{
-                throw new UnauthorizedException("user is not invited on this list")
+                return null
             }
         }
 }

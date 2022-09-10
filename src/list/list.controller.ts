@@ -33,6 +33,9 @@ export class ListController {
             list.owner.toString() === currentUser.id){
             return list;
         }
+        if(!privilege){
+            throw new UnauthorizedException("user is not invited on this list")
+        }
     }
 
     @Post('create')
