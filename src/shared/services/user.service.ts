@@ -12,6 +12,10 @@ export class UserService {
         return await this.userRepository.findOne(data);
     }
 
+    async findById(userId: string){
+        return await this.userRepository.findById(userId);
+    }
+
     async create(data: RegisterData){
         return await this.userRepository.create(data)
     }

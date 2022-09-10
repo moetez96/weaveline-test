@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Request, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, ForbiddenException, Get, NotFoundException, Param, Post, Put, Request, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/shared/guards/jwt.guard';
 import { AuthUser } from 'src/shared/decorators/user.decorator';
 import { ListService } from './list.service';
@@ -11,50 +11,131 @@ export class ListController {
 
     @Get('all')
     @UseGuards(JwtAuthGuard)
-    getAll(@AuthUser() user: any){
-       return this.listService.getAll(user.id);
+    async getAll(@AuthUser() currentUser: any){
+        const lists = await this.listService.getAll(currentUser.id);
+        if(lists.length > 0){
+            return lists;
+        }
+        throw new NotFoundException("no lists found");
     }
 
     @Get('/:id')
     @UseGuards(JwtAuthGuard)
-    getById(@AuthUser() user: any, @Param() params){
-       return this.listService.getById(params.id, user.id);
+    async getById(@AuthUser() currentUser: any, @Param('id') listId){
+        const list = await this.listService.findById(listId);
+        if(!list){
+            throw new NotFoundException("list not found");
+        }
+        const privilege = await this.listService.contributorPrivilege(list, currentUser.id);
+        if(
+            privilege == 'readonly' || 
+            privilege == 'readwrite' || 
+            list.owner.toString() === currentUser.id){
+            return list;
+        }
     }
 
     @Post('create')
     @UseGuards(JwtAuthGuard)
-    create(@AuthUser() user: any, @Body() data: CreateListData){
-        return this.listService.create(data, user.id)
+    async create(@AuthUser() currentUser: any, @Body() data: CreateListData){
+        const foundList = await this.listService.findByNameAndUser(currentUser.id, data);
+        if(foundList){
+            throw new BadRequestException("user already have a list with this name");
+        }
+        return await this.listService.create(data, currentUser.id);
     }
 
     @Put("update/:id")
     @UseGuards(JwtAuthGuard)
-    update(@AuthUser() user: any, @Body() data: CreateListData, @Param() params){
-        return this.listService.update(data, user.id, params.id)
+    async update(@AuthUser() currentUser: any, @Body() data: CreateListData, @Param('id') listId){
+        const foundList = await this.listService.findById(listId);
+        if(!foundList){
+            throw new NotFoundException("list does not exist");
+        }
+        if(foundList.owner.toString() !== currentUser.id){
+            throw new UnauthorizedException("the user does not own this list");
+        }
+        if(foundList.name === data.name){
+            throw new BadRequestException("user already have a list with the same name");
+        }
+        return await this.listService.update(data, foundList._id);
     }
 
     @Delete("delete/:id")
     @UseGuards(JwtAuthGuard)
-    delete(@AuthUser() user: any, @Param() params){
-        return this.listService.delete(user.id, params.id )
+    async delete(@AuthUser() currentUser: any, @Param("id") listId){
+        const list = await this.listService.findById(listId);
+        if(!list){
+            throw new NotFoundException("list does not exist");
+        }
+        if(list.owner.toString() !== currentUser.id){
+            throw new UnauthorizedException("the user does not own this list");
+        }
+        await this.listService.delete(listId);
+        return {message: "deleted with success"};
     }
 
     @Put("invite/:lid/:cid")
     @UseGuards(JwtAuthGuard)
-    inviteContributor(@AuthUser() user: any,@Body() data: ContributorData, @Param() params){
-        return this.listService.inviteContributor(user.id,data , params.lid, params.cid )
+    async inviteContributor(@AuthUser() currentUser: any, @Body() data: ContributorData, @Param() params){
+        var list = await this.listService.findById(params.lid);
+        if(!list){
+            throw new NotFoundException("list does not exist");
+        }
+        if(list.owner.toString() !== currentUser.id){
+            throw new UnauthorizedException("the user does not own this list");
+        }
+        if(currentUser.id === params.cid){
+            throw new ForbiddenException("the user cannot invite himself");
+        }
+        if(this.listService.findContributorInList(list, params.cid)){
+            throw new UnauthorizedException("contributor already exist");
+        }
+        return await this.listService.inviteContributor(data , list, params.cid);
     }
+
     @Delete("remove_contributor/:lid/:cid")
     @UseGuards(JwtAuthGuard)
-    removeContributor(@AuthUser() user: any, @Param() params){
-        return this.listService.removeContributor(user.id, params.lid, params.cid )
+    async removeContributor(@AuthUser() currentUser: any, @Param() params){
+        var list = await this.listService.findById(params.lid);
+        if(!list){
+            throw new NotFoundException("list does not exist");
+        }
+        console.log(currentUser.id, list.owner.toString() )
+        if(list.owner.toString() !== currentUser.id){
+            throw new ForbiddenException("the user does not own this list");
+        }
+        if(!this.listService.findContributorInList(list, params.cid)){
+            throw new ForbiddenException("contributor does not exist in this list");
+        }
+         var contributors = list.contributors.filter((contributor) => {
+            return contributor.user.toString() !== params.cid
+        });
+        return await this.listService.removeContributor(list._id, contributors);
     }
 
     @Put("change_contributor_privilege/:lid/:cid")
     @UseGuards(JwtAuthGuard)
-    changeContributorPrivilege(@AuthUser() user: any,@Body() data: ContributorData , @Param() params){
-        return this.listService.changeContributorPrivilege(user.id,data , params.lid, params.cid )
+    async changeContributorPrivilege(@AuthUser() currentUser: any, @Body() data: ContributorData, @Param() params){
+        var list = await this.listService.findById(params.lid);
+        if(!list){
+            throw new NotFoundException("list does not exist");
+        }
+        if(list.owner.toString() !== currentUser.id){
+            throw new ForbiddenException("the user does not own this list");
+        }
+        if(!this.listService.findContributorInList(list, params.cid)){
+            throw new NotFoundException("contributor does not exist in this list");
+        }
+        const contributors = list.contributors.map((contributor) => {
+            if(contributor.user.toString() === params.cid){
+                contributor.privilege = data.privilege;
+            }
+            return contributor
+         });
+        
+        return await this.listService.changeContributorPrivilege(list._id, contributors);
+         
     }
-    
-    
+
 }

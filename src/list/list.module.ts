@@ -8,6 +8,7 @@ import { UserRepository } from 'src/shared/repositories/user.repository';
 import { User, UserSchema } from 'src/model/user.schema';
 import { Contributor, ContributorSchema } from 'src/model/contributor.schema';
 import { ContributorRepository } from './repositories/contributor.repository';
+import { UserService } from 'src/shared/services/user.service';
 
 @Module({
     imports: [
@@ -17,6 +18,6 @@ import { ContributorRepository } from './repositories/contributor.repository';
             {name: Contributor.name, schema: ContributorSchema}
         ])], 
     controllers: [ListController],
-    providers: [ListService, ListRepository, UserRepository, ContributorRepository]
+    providers: [ListService, UserService, ListRepository, UserRepository, ContributorRepository]
 })
 export class ListModule {}
