@@ -1,10 +1,8 @@
 import {IsEnum} from 'class-validator'
-export enum AppState {
-  READONLY = 'readonly',
-  READWRITE = 'readwrite',
-}
+import { Privilege } from '../enums/privilege.enum';
+
 export class ContributorData {
-    @IsEnum(AppState)
+    @IsEnum(Privilege)
     readonly privilege: string;
 }
 
