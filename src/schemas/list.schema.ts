@@ -1,11 +1,11 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import mongoose from "mongoose";
-import { Participant } from "./participant.schema";
+import { Contributor } from "./contributor.schema";
 import { User } from "./user.schema";
 export type ListDocument = List & Document;
 @Schema()
 export class List {
-    @Prop({required:true})
+    @Prop({required:true, unique: true})
     name: string;
     
     @Prop({ 
@@ -15,7 +15,7 @@ export class List {
     owner: User;
     
     @Prop()
-    participants : [Participant]
+    contributors : [Contributor]
 
 }
 export const ListSchema = SchemaFactory.createForClass(List);

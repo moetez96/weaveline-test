@@ -1,5 +1,5 @@
 import {IsString, MinLength} from 'class-validator'
-export class ListData {
+export class CreateListData {
     @IsString()
     @MinLength(3)
     readonly name: string;

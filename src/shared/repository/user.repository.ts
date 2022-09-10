@@ -8,6 +8,10 @@ import { User, UserDocument } from "src/schemas/user.schema";
 export class UserRepository {
     constructor(@InjectModel(User.name) private userModel: Model<UserDocument>){}
     
+     async findById(userId: string): Promise<any> {
+        return this.userModel.findById(userId);
+    }
+    
     async findOne(userFilterQuery: FilterQuery<User>): Promise<UserDocument> {
         return this.userModel.findOne(userFilterQuery);
     }
@@ -21,6 +25,7 @@ export class UserRepository {
         return newUser.save();
     }
     async findOneAndUpdate(userFilterQuery: FilterQuery<User>, user: Partial<User>): Promise<UserDocument> {
+        
         return this.userModel.findOneAndUpdate(userFilterQuery, user)
     }
 }
