@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, UseFilters, UseGuards } from '@nestjs/common';
 import { AuthUser } from 'src/shared/decorators/user.decorator';
 import { JwtAuthGuard } from 'src/shared/guards/jwt.guard';
 import { ValidatePayloadExistsPipe } from 'src/shared/piplines/validatepayload.pipline';

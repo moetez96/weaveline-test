@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { UserRepository } from 'src/shared/repository/user.repository';
 import { LoginData } from './dto/login.dto';
 import { RegisterData } from './dto/register.dto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
@@ -14,7 +15,8 @@ export class AuthService {
             if(!user){
                throw new NotFoundException("user with this email does not exist")
             }
-            if(user.password !== data.password){
+            const passwordIsMatch = await bcrypt.compare(data.password, user.password);
+            if(!passwordIsMatch){
                 throw new UnauthorizedException("password not valid")
             }
             return this.signUser(user)
@@ -29,6 +31,9 @@ export class AuthService {
             if(user){
                 throw new UnauthorizedException("email already exist")
             }else{
+                const saltOrRounds = parseInt(process.env.SALT);
+                const hashedPassword = await bcrypt.hash(data.password, saltOrRounds);
+                data.password = hashedPassword
                 const newUser = await this.userRepository.create(data);
                 return newUser;
             }

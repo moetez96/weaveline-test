@@ -133,7 +133,7 @@ export class NoteService {
                 }
                 }))
                 if(!contributorFound){
-                    throw new UnauthorizedException("user is not invited on this list")
+                    throw new UnauthorizedException("user is not invited on this list", "Unauthorized")
                 }
                 return contributorFound.privilege;
             }else{
