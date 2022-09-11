@@ -1,14 +1,21 @@
-import {IsNotEmpty, IsOptional, IsString, MinLength, ValidateIf} from 'class-validator'
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import {IsNotEmpty, IsOptional, IsString} from 'class-validator'
 export class UpdateNoteData {
+    @ApiPropertyOptional({ 
+        description: 'The description of the note',
+        example: 'Description 1'
+    })
     @IsOptional()
     @IsString()
     @IsNotEmpty()
-    @ValidateIf(o => !o.description || o.name)
     readonly name: string;
 
+    @ApiPropertyOptional({ 
+        description: 'The description of the note',
+        example: 'Description 1'
+    })
     @IsOptional()
     @IsString()
     @IsNotEmpty()
-    @ValidateIf(o => !o.name || o.description)
     readonly description: string;
 }

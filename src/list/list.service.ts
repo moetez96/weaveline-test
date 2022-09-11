@@ -1,6 +1,5 @@
-import { ForbiddenException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
-import { List, ListDocument } from 'src/model/list.schema';
-import { User } from 'src/model/user.schema';
+import { Injectable } from '@nestjs/common';
+import { List } from 'src/model/list.schema';
 import { UserRepository } from 'src/shared/repositories/user.repository';
 import { ContributorData } from './dto/contributor.dto';
 import { CreateListData } from './dto/createlist.dto';

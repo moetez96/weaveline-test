@@ -1,7 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { FilterQuery, Model } from "mongoose";
-import { Contributor, ContributorDocument } from "src/model/contributor.schema";
 import { Note, NoteDocument } from "src/model/note.schema";
 import { UpdateNoteData } from "../dto/updateNote.dto";
 

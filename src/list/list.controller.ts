@@ -4,11 +4,22 @@ import { AuthUser } from 'src/shared/decorators/user.decorator';
 import { ListService } from './list.service';
 import { CreateListData } from './dto/createlist.dto';
 import { ContributorData } from './dto/contributor.dto';
+import { ApiBadRequestResponse, ApiBearerAuth, ApiCreatedResponse, ApiForbiddenResponse, ApiNotFoundResponse, ApiParam, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import { List } from 'src/model/list.schema';
 
+@ApiBearerAuth("accessToken")
+@ApiTags('List')
 @Controller('list')
 export class ListController {
     constructor(private listService: ListService){}
 
+    @ApiCreatedResponse({
+        description: 'Lists found',
+        type: [List]
+    })
+    @ApiNotFoundResponse({
+        description: 'No lists found',
+    })
     @Get('all')
     @UseGuards(JwtAuthGuard)
     async getAll(@AuthUser() currentUser: any){
@@ -19,6 +30,21 @@ export class ListController {
         throw new NotFoundException("no lists found");
     }
 
+    @ApiCreatedResponse({
+        description: 'List found',
+        type: List
+    })
+    @ApiNotFoundResponse({
+        description: 'The list not found',
+    })
+    @ApiUnauthorizedResponse({
+        description: 'The user is not the owner and is not invited to the list',
+    })
+    @ApiParam({
+        name: 'id', 
+        required: true, 
+        description: 'The id of the list'
+    })
     @Get('/:id')
     @UseGuards(JwtAuthGuard)
     async getById(@AuthUser() currentUser: any, @Param('id') listId){
@@ -38,16 +64,47 @@ export class ListController {
         }
     }
 
+    @ApiCreatedResponse({
+        description: 'List created',
+        type: List
+    })
+    @ApiForbiddenResponse({
+        description: 'The user already have a list with the same name',
+    })
+    @ApiBadRequestResponse({
+        description: 'The request body is not valid',
+    })
     @Post('create')
     @UseGuards(JwtAuthGuard)
     async create(@AuthUser() currentUser: any, @Body() data: CreateListData){
         const foundList = await this.listService.findByNameAndUser(currentUser.id, data);
         if(foundList){
-            throw new BadRequestException("user already have a list with this name");
+            throw new ForbiddenException("user already have a list with this name");
         }
         return await this.listService.create(data, currentUser.id);
     }
 
+    @ApiCreatedResponse({
+        description: 'List updated',
+        type: List
+    })
+    @ApiNotFoundResponse({
+        description: 'The list not found',
+    })
+    @ApiUnauthorizedResponse({
+        description: 'The user does not own the list',
+    })
+    @ApiForbiddenResponse({
+        description: 'The user already have a list with the same name',
+    })
+    @ApiBadRequestResponse({
+        description: 'The request body is not valid',
+    })
+    @ApiParam({
+        name: 'id', 
+        required: true, 
+        description: 'The id of the list'
+    })
     @Put("update/:id")
     @UseGuards(JwtAuthGuard)
     async update(@AuthUser() currentUser: any, @Body() data: CreateListData, @Param('id') listId){
@@ -59,11 +116,26 @@ export class ListController {
             throw new UnauthorizedException("the user does not own this list");
         }
         if(foundList.name === data.name){
-            throw new BadRequestException("user already have a list with the same name");
+            throw new ForbiddenException("user already have a list with the same name");
         }
         return await this.listService.update(data, foundList._id);
     }
 
+    @ApiCreatedResponse({
+        description: 'List deleted',
+        type: List
+    })
+    @ApiNotFoundResponse({
+        description: 'The list not found',
+    })
+    @ApiUnauthorizedResponse({
+        description: 'The user does not own the list',
+    })
+    @ApiParam({
+        name: 'id', 
+        required: true, 
+        description: 'The id of the list'
+    })
     @Delete("delete/:id")
     @UseGuards(JwtAuthGuard)
     async delete(@AuthUser() currentUser: any, @Param("id") listId){
@@ -78,6 +150,29 @@ export class ListController {
         return {message: "deleted with success"};
     }
 
+   @ApiCreatedResponse({
+        description: 'Contributor added',
+        type: List
+    })
+    @ApiNotFoundResponse({
+        description: 'The list not found',
+    })
+    @ApiUnauthorizedResponse({
+        description: 'The user does not own the list',
+    })
+    @ApiForbiddenResponse({
+        description: 'Cannot invite the user',
+    })
+    @ApiParam({
+        name: 'lid', 
+        required: true, 
+        description: 'The id of the list'
+    })
+    @ApiParam({
+        name: 'cid', 
+        required: true, 
+        description: 'The id of the user'
+    })
     @Put("invite/:lid/:cid")
     @UseGuards(JwtAuthGuard)
     async inviteContributor(@AuthUser() currentUser: any, @Body() data: ContributorData, @Param() params){
@@ -92,11 +187,34 @@ export class ListController {
             throw new ForbiddenException("the user cannot invite himself");
         }
         if(this.listService.findContributorInList(list, params.cid)){
-            throw new UnauthorizedException("contributor already exist");
+            throw new ForbiddenException("contributor already exist");
         }
         return await this.listService.inviteContributor(data , list, params.cid);
     }
 
+    @ApiCreatedResponse({
+        description: 'Contributor removed',
+        type: List
+    })
+    @ApiNotFoundResponse({
+        description: 'The list not found',
+    })
+    @ApiUnauthorizedResponse({
+        description: 'The user does not own the list',
+    })
+    @ApiForbiddenResponse({
+        description: 'The user is not in the contributors list',
+    })
+    @ApiParam({
+        name: 'lid', 
+        required: true, 
+        description: 'The id of the list'
+    })
+    @ApiParam({
+        name: 'cid', 
+        required: true, 
+        description: 'The id of the user'
+    })
     @Delete("remove_contributor/:lid/:cid")
     @UseGuards(JwtAuthGuard)
     async removeContributor(@AuthUser() currentUser: any, @Param() params){
@@ -106,7 +224,7 @@ export class ListController {
         }
         console.log(currentUser.id, list.owner.toString() )
         if(list.owner.toString() !== currentUser.id){
-            throw new ForbiddenException("the user does not own this list");
+            throw new UnauthorizedException("the user does not own this list");
         }
         if(!this.listService.findContributorInList(list, params.cid)){
             throw new ForbiddenException("contributor does not exist in this list");
@@ -117,6 +235,32 @@ export class ListController {
         return await this.listService.removeContributor(list._id, contributors);
     }
 
+    @ApiCreatedResponse({
+        description: 'Contributor privilege changed',
+        type: List
+    })
+    @ApiNotFoundResponse({
+        description: 'The list not found',
+    })
+    @ApiUnauthorizedResponse({
+        description: 'The user does not own the list',
+    })
+    @ApiForbiddenResponse({
+        description: 'The user is not in the contributors list',
+    })
+    @ApiBadRequestResponse({
+        description: 'The request body is not valid',
+    })
+    @ApiParam({
+        name: 'lid', 
+        required: true, 
+        description: 'The id of the list'
+    })
+    @ApiParam({
+        name: 'cid', 
+        required: true, 
+        description: 'The id of the user'
+    })
     @Put("change_contributor_privilege/:lid/:cid")
     @UseGuards(JwtAuthGuard)
     async changeContributorPrivilege(@AuthUser() currentUser: any, @Body() data: ContributorData, @Param() params){
@@ -125,10 +269,10 @@ export class ListController {
             throw new NotFoundException("list does not exist");
         }
         if(list.owner.toString() !== currentUser.id){
-            throw new ForbiddenException("the user does not own this list");
+            throw new UnauthorizedException("the user does not own this list");
         }
         if(!this.listService.findContributorInList(list, params.cid)){
-            throw new NotFoundException("contributor does not exist in this list");
+            throw new ForbiddenException("contributor does not exist in this list");
         }
         const contributors = list.contributors.map((contributor) => {
             if(contributor.user.toString() === params.cid){

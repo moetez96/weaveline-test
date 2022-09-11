@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ListRepository } from 'src/list/repositories/list.repository';
 import { List } from 'src/model/list.schema';
 import { UserRepository } from 'src/shared/repositories/user.repository';
@@ -39,19 +39,5 @@ export class NoteService {
 
         async delete(noteId: string){
             return await this.noteRepository.findByIdAndDelete(noteId);
-        }
-
-        async contributorPrivilege(list : any, contributorId: string){
-            if(list.contributors.length > 0 ){
-                var contributorFound : any = null
-                await Promise.all(list.contributors.map((contributor) => {
-                if(contributor.user.toString() === contributorId){
-                    contributorFound = contributor
-                }
-                }));
-                return contributorFound.privilege;
-            }else{
-                return null
-            }
         }
 }
