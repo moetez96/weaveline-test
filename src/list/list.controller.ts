@@ -222,7 +222,6 @@ export class ListController {
         if(!list){
             throw new NotFoundException("list does not exist");
         }
-        console.log(currentUser.id, list.owner.toString() )
         if(list.owner.toString() !== currentUser.id){
             throw new UnauthorizedException("the user does not own this list");
         }

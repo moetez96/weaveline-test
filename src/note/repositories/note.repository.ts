@@ -8,7 +8,7 @@ import { UpdateNoteData } from "../dto/updateNote.dto";
 export class NoteRepository {
     constructor(@InjectModel(Note.name) private noteModel: Model<NoteDocument>){}
 
-    async findById(noteId: string): Promise<NoteDocument> {
+    async findById(noteId: string): Promise<any> {
         return this.noteModel.findById(noteId);
     }
 

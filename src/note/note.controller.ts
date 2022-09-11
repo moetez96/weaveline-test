@@ -37,14 +37,15 @@ export class NoteController {
         if(!note){
             throw new NotFoundException("note does not exist");
         }
-        const list = await this.listService.findOne(note.list);
+        const list = await this.listService.findById(note.list._id);
          if(!list){
             throw new NotFoundException("list not found");
         }
+        console.log(list.owner.toString(), currentUser.id)
         const privilege = await this.listService.contributorPrivilege(list, currentUser.id)
         if(
             privilege === 'readonly' || 
-            privilege == 'readwrite' || 
+            privilege === 'readwrite' || 
             list.owner.toString() === currentUser.id
             ){
             return note;
@@ -72,7 +73,7 @@ export class NoteController {
     @ApiParam({
         name: 'id', 
         required: true, 
-        description: 'The id of the note'
+        description: 'The id of the list'
     })
     @Post('create/:id')
     @UseGuards(JwtAuthGuard)
@@ -123,7 +124,7 @@ export class NoteController {
         if(!note){
             throw new NotFoundException("note does not exist");
         } 
-        const list = await this.listService.findOne(note.list);
+        const list = await this.listService.findById(note.list._id);
         if(!list){
             throw new NotFoundException("list does not exist");
         }
@@ -167,7 +168,7 @@ export class NoteController {
         if(!note){
             throw new NotFoundException("note does not exist");
         }
-        const list = await this.listService.findOne(note.list);  
+        const list = await this.listService.findById(note.list._id);
         if(!list){
             throw new NotFoundException("list does not exist");
         }

@@ -85,9 +85,9 @@ export class ListService {
             var contributorFound : any = null
             await Promise.all(list.contributors.map((contributor) => {
             if(contributor.user.toString() === contributorId){
-                contributorFound = contributor
+                contributorFound = contributor.privilege
             }}));
-            return contributorFound.privilege;
+            return contributorFound;
         }else{
             return null
         }

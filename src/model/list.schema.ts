@@ -1,7 +1,6 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { ApiProperty } from "@nestjs/swagger";
-import mongoose, { Types } from "mongoose";
-import { type } from "os";
+import mongoose from "mongoose";
 import { Contributor } from "./contributor.schema";
 import { User } from "./user.schema";
 export type ListDocument = List & Document;
@@ -12,7 +11,7 @@ export class List {
         description: 'The name of the list', 
         example: "List 1" 
     })
-    @Prop({required:true, unique: true})
+    @Prop({required:true})
     name: string;
     
     @ApiProperty({ 
