@@ -56,6 +56,7 @@ The Api is defided into three segments the Authentication, List, Note
 
 ```http
   POST /auth/login
+  
   POST /auth/register
 ```
 
