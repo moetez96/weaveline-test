@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { FilterQuery, Model } from "mongoose";
+import { List } from "src/model/list.schema";
 import { Note, NoteDocument } from "src/model/note.schema";
 import { UpdateNoteData } from "../dto/updateNote.dto";
 
@@ -10,6 +11,10 @@ export class NoteRepository {
 
     async findById(noteId: string): Promise<any> {
         return this.noteModel.findById(noteId);
+    }
+
+    async findByList(list: any){
+        return this.noteModel.find({list: list._id});
     }
 
     async findOne(noteFilterQuery: FilterQuery<Note>): Promise<NoteDocument> {

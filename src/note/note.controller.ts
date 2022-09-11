@@ -17,7 +17,7 @@ export class NoteController {
 
     @ApiCreatedResponse({
         description: 'Note found',
-        type: [Note]
+        type: Note
     })
     @ApiNotFoundResponse({
         description: 'List/Note not found',
@@ -41,7 +41,6 @@ export class NoteController {
          if(!list){
             throw new NotFoundException("list not found");
         }
-        console.log(list.owner.toString(), currentUser.id)
         const privilege = await this.listService.contributorPrivilege(list, currentUser.id)
         if(
             privilege === 'readonly' || 
@@ -54,6 +53,43 @@ export class NoteController {
             throw new UnauthorizedException("user is not invited on this list")
         }
     }
+
+    @ApiCreatedResponse({
+        description: 'Notes found',
+        type: [Note]
+    })
+    @ApiNotFoundResponse({
+        description: 'Note not found',
+    })
+    @ApiUnauthorizedResponse({
+        description: 'The user cannot see notes in this list',
+    })
+    @ApiParam({
+        name: 'id', 
+        required: true, 
+        description: 'The id of the list'
+    })
+    @Get("all_by_list/:id")
+    @UseGuards(JwtAuthGuard)
+    async getAllByList(@AuthUser() currentUser: any, @Param("id") listId){
+        const list = await this.listService.findById(listId);
+         if(!list){
+            throw new NotFoundException("list not found");
+        }
+        const notes = await this.noteService.findNotesByList(list);
+        const privilege = await this.listService.contributorPrivilege(list, currentUser.id)
+        if(
+            privilege === 'readonly' || 
+            privilege === 'readwrite' || 
+            list.owner.toString() === currentUser.id
+            ){
+            return notes;
+        }
+        if(!privilege){
+            throw new UnauthorizedException("user is not invited on this list")
+        }
+    }
+
     @ApiCreatedResponse({
         description: 'Note created',
         type: Note

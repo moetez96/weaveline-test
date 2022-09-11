@@ -19,7 +19,11 @@ export class NoteService {
         }
 
         async findByNameAndList(data: any){
-            return await this.noteRepository.findOne(data)
+            return await this.noteRepository.findOne(data);
+        }
+
+        async findNotesByList(list: any){
+            return await this.noteRepository.findByList(list);
         }
 
         async create(data: CreateNoteData, list: List, userId: string ){
