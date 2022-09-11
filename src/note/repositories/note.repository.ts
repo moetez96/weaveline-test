@@ -10,38 +10,38 @@ export class NoteRepository {
     constructor(@InjectModel(Note.name) private noteModel: Model<NoteDocument>){}
 
     async findById(noteId: string): Promise<any> {
-        return this.noteModel.findById(noteId);
+        return await this.noteModel.findById(noteId);
     }
 
     async findByList(list: any){
-        return this.noteModel.find({list: list._id});
+        return await this.noteModel.find({list: list._id});
     }
 
     async findOne(noteFilterQuery: FilterQuery<Note>): Promise<NoteDocument> {
-        return this.noteModel.findOne(noteFilterQuery);
+        return await this.noteModel.findOne(noteFilterQuery);
     }
     
     async create(note: any): Promise<NoteDocument> {
         const newNote = new this.noteModel(note);
-        return newNote.save();
+        return await newNote.save();
     }
    
-    async findByIdAndUpdate(userId: string, note: UpdateNoteData ): Promise<NoteDocument>{
-        const updatedNote = await this.noteModel.findByIdAndUpdate(userId, note);
-        return this.noteModel.findById(updatedNote._id)
+    async findByIdAndUpdate(noteId: string, note: UpdateNoteData ): Promise<NoteDocument>{
+        const updatedNote = await this.noteModel.findByIdAndUpdate(noteId, note);
+        return await this.noteModel.findById(updatedNote._id)
     }
 
     async findOneAndUpdate(noteFilterQuery: FilterQuery<Note>, note: UpdateNoteData): Promise<NoteDocument> {
         const updatedNote = await this.noteModel.findOneAndUpdate(noteFilterQuery, note);
-        return this.noteModel.findById(updatedNote._id)
+        return await this.noteModel.findById(updatedNote._id)
     }
     async findOneAndDelete(noteFilterQuery: FilterQuery<Note>): Promise<any> {
-        await this.noteModel.findOneAndDelete(noteFilterQuery)
-        return {message: 'note deleted'}
+        return await this.noteModel.findOneAndDelete(noteFilterQuery)
     }
-    async findByIdAndDelete(userId: string): Promise<any> {
-        await this.noteModel.findByIdAndDelete(userId);
-        return {message: 'note deleted'}
+    async findByIdAndDelete(noteId: string): Promise<any> {
+        return await this.noteModel.findByIdAndDelete(noteId);
     }
-    
+    async findByListAndDelete(listId: string){
+        return await this.noteModel.deleteMany({list: listId});
+    }
 }

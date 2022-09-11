@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { List } from 'src/model/list.schema';
+import { NoteRepository } from 'src/note/repositories/note.repository';
 import { UserRepository } from 'src/shared/repositories/user.repository';
 import { ContributorData } from './dto/contributor.dto';
 import { CreateListData } from './dto/createlist.dto';
@@ -12,7 +13,8 @@ export class ListService {
     constructor(
         private listRepository : ListRepository, 
         private userRepository: UserRepository,
-        private contributorRepository: ContributorRepository
+        private contributorRepository: ContributorRepository,
+        private noteRepository: NoteRepository
         ){}
     
     async findOne(list: List){
@@ -47,6 +49,7 @@ export class ListService {
     }
 
     async delete(listId: string){
+        await this.noteRepository.findByListAndDelete(listId)
         return await this.listRepository.findByIdAndDelete(listId)
     }
 
